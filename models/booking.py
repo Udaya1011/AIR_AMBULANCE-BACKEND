@@ -57,6 +57,9 @@ class BookingUpdate(BaseModel):
     preferred_time: Optional[time] = None
     required_equipment: Optional[List[EquipmentType]] = None
     special_instructions: Optional[str] = None
+    patient_id: Optional[str] = None
+    origin_hospital_id: Optional[str] = None
+    destination_hospital_id: Optional[str] = None
     status: Optional[BookingStatus] = None
     assigned_aircraft_id: Optional[str] = None
     assigned_crew_ids: Optional[List[str]] = None
