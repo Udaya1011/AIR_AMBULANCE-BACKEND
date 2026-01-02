@@ -30,6 +30,8 @@ class AircraftBase(BaseModel):
     base_location: str
     medical_equipment: List[MedicalEquipment]
     status: AircraftStatus = AircraftStatus.AVAILABLE
+    latitude: float = 0.0
+    longitude: float = 0.0
 
 class AircraftCreate(AircraftBase):
     pass

@@ -21,6 +21,19 @@ class CustomJSONEncoder(json.JSONEncoder):
             return str(obj)
         return super().default(obj)
 
+async def update_hospital_occupancy(hospital_id: str, increment: int):
+    """Helper to update hospital occupied_beds count"""
+    if not hospital_id or not ObjectId.is_valid(hospital_id):
+        return
+    
+    try:
+        hospitals_collection = get_collection("hospitals")
+        hospitals_collection.update_one(
+            {"_id": ObjectId(hospital_id)},
+            {"$inc": {"occupied_beds": increment}}
+        )
+    except Exception as e:
+        logger.error(f"Error updating hospital occupancy: {e}")
 
 # =====================================================
 # CREATE PATIENT
@@ -52,11 +65,32 @@ async def create_patient(
         patient_dict["created_at"] = patient_dict["updated_at"] = datetime.utcnow()
         patient_dict["created_by"] = str(current_user.id)
 
+        # Generate custom patient_id
+        hospital_id = patient_dict.get("assigned_hospital_id")
+        if hospital_id and ObjectId.is_valid(hospital_id):
+            hospitals_collection = get_collection("hospitals")
+            hospital = hospitals_collection.find_one({"_id": ObjectId(hospital_id)})
+            if hospital:
+                # Use first word of hospital name as prefix
+                h_name = hospital.get("hospital_name", "HOSP")
+                prefix = h_name.split()[0].upper()
+                # Count current patients for this hospital
+                count = patients_collection.count_documents({"assigned_hospital_id": hospital_id})
+                patient_dict["patient_id"] = f"{prefix}-{str(count + 1).zfill(3)}"
+            else:
+                patient_dict["patient_id"] = f"PAT-{str(patients_collection.count_documents({}) + 1).zfill(3)}"
+        else:
+            patient_dict["patient_id"] = f"GEN-{str(patients_collection.count_documents({}) + 1).zfill(3)}"
+
         result = patients_collection.insert_one(patient_dict)
         inserted = patients_collection.find_one({"_id": result.inserted_id})
 
         if not inserted:
             raise HTTPException(status_code=500, detail="Failed to retrieve inserted patient")
+
+        # Update hospital occupancy if assigned
+        if patient_dict.get("assigned_hospital_id"):
+            await update_hospital_occupancy(patient_dict["assigned_hospital_id"], 1)
 
         inserted["id"] = str(inserted["_id"])
 
@@ -202,6 +236,29 @@ async def update_patient(
 
         update_data["updated_at"] = datetime.utcnow()
 
+        # Handle hospital occupancy change
+        old_hospital_id = existing.get("assigned_hospital_id")
+        new_hospital_id = update_data.get("assigned_hospital_id")
+
+        if old_hospital_id != new_hospital_id:
+            if old_hospital_id:
+                await update_hospital_occupancy(old_hospital_id, -1)
+            if new_hospital_id:
+                await update_hospital_occupancy(new_hospital_id, 1)
+                
+                # Regenerate patient_id for the new hospital
+                hospitals_collection = get_collection("hospitals")
+                hospital = hospitals_collection.find_one({"_id": ObjectId(new_hospital_id)})
+                if hospital:
+                    h_name = hospital.get("hospital_name", "HOSP")
+                    prefix = h_name.split()[0].upper()
+                    count = patients_collection.count_documents({"assigned_hospital_id": new_hospital_id})
+                    update_data["patient_id"] = f"{prefix}-{str(count + 1).zfill(3)}"
+            elif old_hospital_id and not new_hospital_id:
+                # If unassigned, change to GEN prefix
+                count = patients_collection.count_documents({"assigned_hospital_id": None})
+                update_data["patient_id"] = f"GEN-{str(count + 1).zfill(3)}"
+
         patients_collection.update_one({"_id": ObjectId(patient_id)}, {"$set": update_data})
 
         updated = patients_collection.find_one({"_id": ObjectId(patient_id)})
@@ -239,10 +296,16 @@ async def delete_patient(
 
     try:
         patients_collection = get_collection("patients")
+        existing = patients_collection.find_one({"_id": ObjectId(patient_id)})
+        
         result = patients_collection.delete_one({"_id": ObjectId(patient_id)})
 
         if result.deleted_count == 0:
             raise HTTPException(status_code=404, detail="Patient not found")
+
+        # Update hospital occupancy if patient was assigned
+        if existing and existing.get("assigned_hospital_id"):
+            await update_hospital_occupancy(existing["assigned_hospital_id"], -1)
 
         return {"message": "Patient deleted successfully"}
 

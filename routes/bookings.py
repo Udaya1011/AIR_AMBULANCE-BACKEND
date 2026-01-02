@@ -244,8 +244,22 @@ async def create_booking(
         booking_dict["flight_duration"] = None
         booking_dict["created_at"] = booking_dict["updated_at"] = datetime.utcnow()
         booking_dict["created_by"] = str(current_user.id)
-        booking_dict["estimated_cost"] = calculate_estimated_cost(booking_dict)
+        if booking_dict.get("estimated_cost") is None:
+            booking_dict["estimated_cost"] = calculate_estimated_cost(booking_dict)
+
+        # Generate custom booking_id
+        origin_h_id = booking_dict.get("origin_hospital_id")
+        hospitals_collection = get_collection("hospitals")
+        prefix = "GEN"
+        if origin_h_id and ObjectId.is_valid(origin_h_id):
+            origin_h = hospitals_collection.find_one({"_id": ObjectId(origin_h_id)})
+            if origin_h:
+                h_name = origin_h.get("hospital_name", "HOSP")
+                prefix = h_name.split()[0].upper()
         
+        count = bookings_collection.count_documents({"origin_hospital_id": origin_h_id})
+        booking_dict["booking_id"] = f"BK-{prefix}-{str(count + 1).zfill(3)}"
+
         # Insert into database
         result = bookings_collection.insert_one(booking_dict)
         booking_id = str(result.inserted_id)
