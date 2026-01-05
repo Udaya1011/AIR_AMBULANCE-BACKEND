@@ -47,6 +47,7 @@ class HospitalBase(BaseModel):
     longitude: float
     level_of_care: LevelOfCare
     icu_capacity: int
+    occupied_beds: int = 0
     contact_information: ContactPerson
     preferred_pickup_location: str
     staff: Optional[List[HospitalStaff]] = []   # NEW
@@ -63,7 +64,9 @@ class HospitalUpdate(BaseModel):
     longitude: Optional[float] = None
     level_of_care: Optional[LevelOfCare] = None
     icu_capacity: Optional[int] = None
+    occupied_beds: Optional[int] = None
     preferred_pickup_location: Optional[str] = None
+    contact_information: Optional[ContactPerson] = None
     staff: Optional[List[HospitalStaff]] = None
 
 

@@ -67,6 +67,7 @@ class CurrentVitals(BaseModel):
 
 
 class PatientBase(BaseModel):
+    patient_id: Optional[str] = None
     full_name: str
     date_of_birth: date
     gender: Gender
@@ -76,6 +77,9 @@ class PatientBase(BaseModel):
 
     # ✅ Added blood group
     blood_group: BloodGroup
+
+    # ✅ Added assigned hospital
+    assigned_hospital_id: Optional[str] = None
 
     allergies: List[str] = []
     current_vitals: Optional[CurrentVitals] = None
@@ -95,6 +99,7 @@ class PatientUpdate(BaseModel):
     diagnosis: Optional[str] = None
     acuity_level: Optional[AcuityLevel] = None
     blood_group: Optional[BloodGroup] = None   # ✅ Added here
+    assigned_hospital_id: Optional[str] = None # ✅ Added here
     allergies: Optional[List[str]] = None
     current_vitals: Optional[CurrentVitals] = None
     special_equipment_needed: Optional[List[str]] = None

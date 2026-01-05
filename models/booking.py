@@ -39,6 +39,7 @@ class EquipmentType(str, Enum):
     PATIENT_MONITOR = "patient_monitor"
 
 class BookingBase(BaseModel):
+    booking_id: Optional[str] = None
     patient_id: str
     urgency: AcuityLevel
     origin_hospital_id: str
@@ -49,7 +50,7 @@ class BookingBase(BaseModel):
     special_instructions: Optional[str] = None
 
 class BookingCreate(BookingBase):
-    pass
+    estimated_cost: Optional[float] = None
 
 class BookingUpdate(BaseModel):
     urgency: Optional[AcuityLevel] = None
@@ -57,10 +58,14 @@ class BookingUpdate(BaseModel):
     preferred_time: Optional[time] = None
     required_equipment: Optional[List[EquipmentType]] = None
     special_instructions: Optional[str] = None
+    patient_id: Optional[str] = None
+    origin_hospital_id: Optional[str] = None
+    destination_hospital_id: Optional[str] = None
     status: Optional[BookingStatus] = None
     assigned_aircraft_id: Optional[str] = None
     assigned_crew_ids: Optional[List[str]] = None
-    actual_cost: Optional[float] = None  # Add this line
+    estimated_cost: Optional[float] = None
+    actual_cost: Optional[float] = None
     flight_duration: Optional[int] = None 
 
 class Booking(BookingBase):

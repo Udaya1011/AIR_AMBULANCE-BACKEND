@@ -447,10 +447,10 @@ def initialize_database():
             print(f"✅ Aircraft created: {aircraft_data['registration']}")
     
     # Initialize sample patients
-    initialize_sample_patients()
+    # initialize_sample_patients()
     
     # Initialize sample bookings
-    initialize_sample_bookings()
+    # initialize_sample_bookings()
     
     # Initialize user settings for all users
     initialize_settings_collection()
