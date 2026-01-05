@@ -66,6 +66,7 @@ class HospitalUpdate(BaseModel):
     icu_capacity: Optional[int] = None
     occupied_beds: Optional[int] = None
     preferred_pickup_location: Optional[str] = None
+    contact_information: Optional[ContactPerson] = None
     staff: Optional[List[HospitalStaff]] = None
 
 
