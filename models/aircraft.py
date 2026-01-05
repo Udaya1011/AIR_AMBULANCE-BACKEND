@@ -46,6 +46,8 @@ class AircraftUpdate(BaseModel):
     cabin_configuration: Optional[str] = None
     base_location: Optional[str] = None
     status: Optional[AircraftStatus] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     medical_equipment: Optional[List[MedicalEquipment]] = None
 
 class MaintenanceRecord(BaseModel):
