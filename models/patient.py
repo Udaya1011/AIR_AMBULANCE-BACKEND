@@ -86,6 +86,7 @@ class PatientBase(BaseModel):
     special_equipment_needed: List[str] = []
     insurance_details: InsuranceDetails
     next_of_kin: NextOfKin
+    photo_url: Optional[str] = None
 
 
 class PatientCreate(PatientBase):
@@ -103,6 +104,7 @@ class PatientUpdate(BaseModel):
     allergies: Optional[List[str]] = None
     current_vitals: Optional[CurrentVitals] = None
     special_equipment_needed: Optional[List[str]] = None
+    photo_url: Optional[str] = None
 
 
 class Patient(PatientBase):
